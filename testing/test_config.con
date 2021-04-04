@@ -1,0 +1,35 @@
+{
+  database_file : "database.db",
+  query_data : [
+    {
+      name : "all_devices",
+      description : "find all devices",
+      statement : "SELECT * FROM Devices;",
+      parameters : [ ],
+      columns :
+      [
+        { name : "index", type : "int" },
+        { name : "identifier", type : "int" },
+        { name : "type", type : "text" },
+        { name : "name", type : "text" },
+        { name : "description", type : "text" }
+      ]
+    },
+    {
+      name : "add_device",
+      description : "add a device",
+      statement :
+"INSERT INTO Devices( DeviceIndex, DeviceIdentifier, DeviceType, DeviceName, DeviceDescription )
+  VALUES ( ?, ?, ?, ?, ? );",
+      parameters :
+      [
+        { name : "index", type : "int" },
+        { name : "identifier", type : "int" },
+        { name : "type", type : "text" },
+        { name : "name", type : "text" },
+        { name : "description", type : "text" }
+      ],
+      columns : [ ]
+    }
+  ]
+}
