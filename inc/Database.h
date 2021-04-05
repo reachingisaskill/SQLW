@@ -16,6 +16,14 @@ namespace SQLW
   class Query;
 
 
+  // Struct to hold the database pointer and its associated mutex
+  struct Connection
+  {
+    sqlite3* database;
+    std::mutex mutex;
+  };
+
+
   /*
    * Wrapper to the Sqlite3 database interface
    */
@@ -34,10 +42,7 @@ namespace SQLW
       unsigned int _busyRetries;
 
       // Database handle
-      sqlite3* _database;
-
-      // Serialize access to the database through this mutex
-      std::mutex _theMutex;
+      Connection _connection;
 
       // Hash-map of the queries implmented for this database
       QueryMap _queries;
@@ -60,25 +65,12 @@ namespace SQLW
 
 
 
-      // Executes a statement using the correct method base on the provided json document
-      rapidjson::Document executeOperation( const char*, const rapidjson::Document& );
+      // Run the query name parsing JSON data in and out
+      rapidjson::Document executeJson( const char*, const rapidjson::Document& );
 
+      // Run the query name parsing JSON data out only. Will fail if parameters are required
+      rapidjson::Document executeJson( const char* );
 
-
-      // Implement the "BasicLockable" interface
-      // Lock the database mutex
-      void lock() { _theMutex.lock(); }
-
-      // Unlock the database mutex
-      void unlock() { _theMutex.unlock(); }
-
-
-
-      // Define the lock_guard style lock for the database
-      typedef std::unique_lock< Database > DatabaseLock;
-
-      // Return a lock on this database
-      DatabaseLock acquire() { return DatabaseLock( *this ); }
   };
 
 }

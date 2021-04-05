@@ -2,31 +2,29 @@
 #ifndef SQLW_QUERY_BASE_H_
 #define SQLW_QUERY_BASE_H_
 
+#include "Parameter.h"
+
 #include "sqlite3.h"
 #include "CON.h"
 #include "rapidjson/document.h"
 
-#include <list>
+#include <vector>
 #include <mutex>
 
 
 namespace SQLW
 {
+  struct Connection;
 
   class Query
   {
-    struct Parameter
-    {
-      enum Type { Text, Int, Bool, Blob, Double };
-      Type type;
-      std::string name;
-    };
 
-    typedef std::list< Parameter > ParameterList;
+    // The parameter list type
+    typedef std::vector< Parameter > ParameterVector;
 
     private:
       // Store a pointer to the database so we can check for errors
-      sqlite3* _database;
+      Connection& _connection;
 
       // Serialize access to this query
       std::mutex _theMutex;
@@ -44,15 +42,15 @@ namespace SQLW
       const char* _error;
 
       // The required parameters
-      ParameterList _parameters;
+      ParameterVector _parameters;
 
       // The returned columns
-      ParameterList _columns;
+      ParameterVector _columns;
 
 
     public:
       // Database connection, name, description, statement
-      Query( sqlite3*, const CON::Object& );
+      Query( Connection&, const CON::Object& );
 
       // Destroy the statement
       ~Query();
@@ -68,6 +66,10 @@ namespace SQLW
       // Runs the query, calling the derived class functions to handle specific operations
       rapidjson::Document run( const rapidjson::Document& );
 
+
+      // Flags to return if the query has/expects columns/parameters
+      bool hasParameters() const { return ! _parameters.empty(); }
+      bool hasColumns() const { return ! _columns.empty(); }
 
 
       // Return's true if an error is present after the last usage
@@ -89,7 +91,7 @@ namespace SQLW
       void lock() { _theMutex.lock(); _error = nullptr; }
 
       // Unlock the internal mutex
-      void unlock() { sqlite3_finalize( _theStatement ); _theMutex.unlock(); }
+      void unlock() { _theMutex.unlock(); }
   };
 
 }

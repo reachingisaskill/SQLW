@@ -30,7 +30,7 @@ int main( int, char** )
       rapidjson::Document request( rapidjson::kObjectType );
 
       rapidjson::Writer<rapidjson::StringBuffer> response_writer( buffer );
-      rapidjson::Document response = db.executeOperation( "wrong", request );
+      rapidjson::Document response = db.executeJson( "wrong", request );
 
       request.Accept( request_writer );
       std::cout << "REQUEST:\n" << buffer.GetString() << '\n' << std::endl;
@@ -48,7 +48,7 @@ int main( int, char** )
       rapidjson::Document request( rapidjson::kObjectType );
 
       rapidjson::Writer<rapidjson::StringBuffer> response_writer( buffer );
-      rapidjson::Document response = db.executeOperation( "all_devices", request );
+      rapidjson::Document response = db.executeJson( "all_devices", request );
 
       request.Accept( request_writer );
       std::cout << "REQUEST:\n" << buffer.GetString() << '\n' << std::endl;
@@ -71,7 +71,7 @@ int main( int, char** )
       request.AddMember( "description", "A testing device", request.GetAllocator() );
 
       rapidjson::Writer<rapidjson::StringBuffer> response_writer( buffer );
-      rapidjson::Document response = db.executeOperation( "add_device", request );
+      rapidjson::Document response = db.executeJson( "add_device", request );
 
       request.Accept( request_writer );
       std::cout << "REQUEST:\n" << buffer.GetString() << '\n' << std::endl;
@@ -89,7 +89,7 @@ int main( int, char** )
       rapidjson::Document request( rapidjson::kObjectType );
 
       rapidjson::Writer<rapidjson::StringBuffer> response_writer( buffer );
-      rapidjson::Document response = db.executeOperation( "all_devices", request );
+      rapidjson::Document response = db.executeJson( "all_devices", request );
 
       request.Accept( request_writer );
       std::cout << "REQUEST:\n" << buffer.GetString() << '\n' << std::endl;

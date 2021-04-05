@@ -11,9 +11,10 @@ namespace SQLW
   Database::Database( const CON::Object& config ) :
     _filename(),
     _busyRetries( 10 ),
-    _database( nullptr ),
+    _connection(),
     _queries()
   {
+    _connection.database = nullptr;
     // Use the schema to validate the config data
 
     // Load the config data
@@ -37,12 +38,12 @@ namespace SQLW
       throw std::runtime_error( "Database Not Found" );
     }
 
-    result = sqlite3_open_v2( _filename.c_str(), &_database, SQLITE_OPEN_READWRITE, nullptr );
+    result = sqlite3_open_v2( _filename.c_str(), &_connection.database, SQLITE_OPEN_READWRITE, nullptr );
 
     if ( result != SQLITE_OK )
     {
-      sqlite3_close( _database );
-      _database = nullptr;
+      sqlite3_close( _connection.database );
+      _connection.database = nullptr;
 
       throw std::runtime_error( "Database Error" );
     }
@@ -54,7 +55,7 @@ namespace SQLW
     {
       const CON::Object query_conf = query_data[i];
 
-      Query* q = new Query( _database, query_conf );
+      Query* q = new Query( _connection, query_conf );
 
       _queries.insert( std::make_pair( query_conf["name"].asString(), q ) );
     }
@@ -69,11 +70,11 @@ namespace SQLW
     }
     _queries.clear();
 
-    sqlite3_close_v2( _database );
+    sqlite3_close_v2( _connection.database );
   }
 
 
-  rapidjson::Document Database::executeOperation( const char* name, const rapidjson::Document& data )
+  rapidjson::Document Database::executeJson( const char* name, const rapidjson::Document& data )
   {
     QueryMap::iterator found = _queries.find( name );
 
@@ -86,6 +87,9 @@ namespace SQLW
     }
     else
     {
+      // Lock the query
+      auto query_lock = found->second->acquire();
+      // Run and return
       return found->second->run( data );
     }
   }
