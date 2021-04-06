@@ -1,4 +1,6 @@
 
+#include "rapidjson/document.h"
+
 #include "Database.h"
 #include "Query.h"
 
@@ -97,7 +99,10 @@ namespace SQLW
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Function definitions
+  // Optional Friend functions
+
+////////////////////////////////////////////////////////////////////////////////
+  // RapidJson Library
 
   bool setParameter( Parameter& param, const rapidjson::Document& data )
   {
@@ -232,7 +237,6 @@ namespace SQLW
 
     return response;
   }
-
 
 }
 

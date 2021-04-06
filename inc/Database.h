@@ -3,7 +3,6 @@
 #define SQLW_DATABASE_H_
 
 #include "sqlite3.h"
-#include "rapidjson/document.h"
 #include "CON.h"
 
 #include <unordered_map>
@@ -32,8 +31,10 @@ namespace SQLW
     // Allow the query class to access some private functions
     friend class Query;
 
-    // Json wrapper interface. Make it a friend for ease.
+#if defined RAPIDJSON_VERSION_STRING
+    // Json wrapper interface.
     friend rapidjson::Document executeJson( Database&, const char*, const rapidjson::Document& );
+#endif
 
     // Container to store the queries
     typedef std::unordered_map< std::string, Query* > QueryMap;
@@ -80,9 +81,15 @@ namespace SQLW
   };
 
 
+////////////////////////////////////////////////////////////////////////////////
+  // Optional functions for different libraries
+
+#if defined RAPIDJSON_VERSION_STRING
 
   // Run the query name parsing JSON data in and out
   rapidjson::Document executeJson( Database&, const char*, const rapidjson::Document& );
+
+#endif
 
 }
 

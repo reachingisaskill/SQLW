@@ -44,7 +44,7 @@ EXE_SRC_DIR = exec
 # The headers to include when we install
 # Top level headers
 INSTALL_TOP_HEADERS = SQLW.h
-INSTALL_HEADERS = QueryBase.h Queries.h Database.h QueryFactory.h
+INSTALL_HEADERS = Query.h Database.h Parameter.h
 
 # Library Name
 LIB_NAME = SQLW
