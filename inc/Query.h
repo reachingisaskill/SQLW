@@ -100,7 +100,16 @@ namespace SQLW
       bool hasColumns() const { return ! _columns.empty(); }
 
 
-      // Iterator interfaces for the params and columns
+      // Interfaces for the params and columns
+
+      // Return a specific parameter
+      Parameter& getParameter( size_t n ) { return _parameters[ n ]; }
+      const Parameter& getParameter( size_t n ) const { return _parameters[ n ]; }
+
+      // Return a specific column
+      Parameter& getColumn( size_t n ) { return _columns[ n ]; }
+      const Parameter& getColumn( size_t n ) const { return _columns[ n ]; }
+
       // Start and end of parameters
       ParameterIterator parametersBegin() { return _parameters.begin(); }
       ParameterIterator parametersEnd() { return _parameters.end(); }
