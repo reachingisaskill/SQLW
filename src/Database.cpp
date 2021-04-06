@@ -74,25 +74,165 @@ namespace SQLW
   }
 
 
-  rapidjson::Document Database::executeJson( const char* name, const rapidjson::Document& data )
+  Query& Database::requestQuery( const char* name )
   {
     QueryMap::iterator found = _queries.find( name );
 
     if ( found == _queries.end() )
     {
-      rapidjson::Document response( rapidjson::kObjectType );
+      throw std::runtime_error( "Requested query does not exist" );
+    }
+
+    return *found->second;
+  }
+
+
+  bool Database::queryExists( const char* name ) const
+  {
+    if ( _queries.find( name ) == _queries.end() )
+      return false;
+    else
+      return true;
+  }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Function definitions
+
+  bool setParameter( Parameter& param, const rapidjson::Document& data )
+  {
+    if ( ! data.HasMember( param.name().c_str() ) )
+      return false;
+
+    switch( param.type() )
+    {
+      case Parameter::Text :
+        if ( ! data[param.name().c_str()].IsString() )
+          return false;
+        else
+          param.set( std::string( data[param.name().c_str()].GetString() ) );
+        break;
+    
+      case Parameter::Int :
+        if ( ! data[param.name().c_str()].IsInt64() )
+          return false;
+        else
+          param.set( data[param.name().c_str()].GetInt64() );
+        break;
+    
+      case Parameter::Bool :
+        if ( ! data[param.name().c_str()].IsBool() )
+          return false;
+        else
+          param.set( data[param.name().c_str()].GetBool() );
+        break;
+    
+      case Parameter::Blob :
+        if ( ! data[param.name().c_str()].IsString() )
+          return false;
+        else
+          param.set( std::string( data[param.name().c_str()].GetString() ) );
+        break;
+    
+      case Parameter::Double :
+        if ( ! data[param.name().c_str()].IsDouble() )
+          return false;
+        else
+          param.set( data[param.name().c_str()].GetDouble() );
+        break;
+    }
+    return true;
+  }
+
+
+  void getParameter( Parameter& param, rapidjson::Document& data )
+  {
+    switch( param.type() )
+    {
+      case Parameter::Text :
+        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
+                        rapidjson::Value( static_cast<std::string>( param ).c_str(), data.GetAllocator() ), data.GetAllocator() );
+        break;
+    
+      case Parameter::Int :
+        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
+                        static_cast< int64_t >( param ), data.GetAllocator() );
+        break;
+    
+      case Parameter::Bool :
+        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
+                        static_cast< bool >( param ), data.GetAllocator() );
+        break;
+    
+      case Parameter::Blob :
+        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
+                        rapidjson::Value( static_cast< std::string >( param ).c_str(), data.GetAllocator() ), data.GetAllocator() );
+        break;
+    
+      case Parameter::Double :
+        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
+                        static_cast< double >( param ), data.GetAllocator() );
+        break;
+    }
+  }
+
+
+  rapidjson::Document executeJson( Database& db, const char* name, const rapidjson::Document& data )
+  {
+    Database::QueryMap::iterator found = db._queries.find( name );
+    rapidjson::Document response( rapidjson::kObjectType );
+
+    if ( found == db._queries.end() )
+    {
       response.AddMember( "success", false, response.GetAllocator() );
-      response.AddMember( "error", rapidjson::Value( "Invalid request.", response.GetAllocator() ), response.GetAllocator() );
+      response.AddMember( "error", rapidjson::Value( "Invalid request. Does not exist.", response.GetAllocator() ), response.GetAllocator() );
       return response;
+    }
+
+    Query& query = *found->second;
+
+    // Lock the query. We're using it now
+    auto query_lock = query.acquire();
+
+    // Load the parameters
+    for ( Query::ParameterIterator pit = query.parametersBegin(); pit != query.parametersEnd(); ++pit )
+    {
+      if ( ! setParameter( *pit, data ) )
+      {
+        response.AddMember( "success", false, response.GetAllocator() );
+        response.AddMember( "error", rapidjson::Value( "Invalid request. Parameters not correct.", response.GetAllocator() ), response.GetAllocator() );
+        return response;
+      }
+    }
+
+    // Lock the database connection
+    query.prepare();
+
+    // Step through the query
+    while ( query.step() )
+    {
+      for ( Query::ColumnIterator cit = query.columnsBegin(); cit != query.columnsEnd(); ++cit )
+      {
+        getParameter( *cit, response );
+      }
+    }
+
+    // Release the database connection
+    query.release();
+
+    if ( query.error() )
+    {
+      response.AddMember( "success", false, response.GetAllocator() );
+      response.AddMember( "error", rapidjson::Value( query.getError(), response.GetAllocator() ), response.GetAllocator() );
     }
     else
     {
-      // Lock the query
-      auto query_lock = found->second->acquire();
-      // Run and return
-      return found->second->run( data );
+      response.AddMember( "success", true, response.GetAllocator() );
     }
+
+    return response;
   }
+
 
 }
 

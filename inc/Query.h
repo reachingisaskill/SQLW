@@ -22,9 +22,22 @@ namespace SQLW
     // The parameter list type
     typedef std::vector< Parameter > ParameterVector;
 
+    public:
+      // Implement the "BasicLockable" interface
+      // Typedef a lock to interface with the mutex
+      typedef std::unique_lock< Query > LockType;
+
+      // Typedef the iterators
+      typedef ParameterVector::iterator ParameterIterator;
+      typedef ParameterVector::iterator ColumnIterator;
+
+
     private:
       // Store a pointer to the database so we can check for errors
       Connection& _connection;
+
+      // Internal connection lock
+      std::unique_lock<std::mutex> _connectionLock;
 
       // Serialize access to this query
       std::mutex _theMutex;
@@ -62,9 +75,24 @@ namespace SQLW
       Query& operator=( Query&& ) = delete;
 
 
+      // Prepare the query. Loads the parameters into the statement and locks the database connection
+      void prepare();
 
-      // Runs the query, calling the derived class functions to handle specific operations
-      rapidjson::Document run( const rapidjson::Document& );
+      // Steps the query so that the columns can be read on each execution.
+      // Returns true while the stepping may continue. Returns false to stop.
+      // Error flag must be checked separately. If error is set false is guarenteed to be returned.
+      bool step();
+
+      // Clean up the query and release the database connection. Must be called even if an error occurs!
+      void release();
+
+
+      // Interface for checking errors during processing
+      // Return's true if an error is present after the last usage
+      bool error() const { return _error != nullptr; }
+
+      // Return the current error
+      const char* getError() const { return _error ? _error : ""; }
 
 
       // Flags to return if the query has/expects columns/parameters
@@ -72,26 +100,24 @@ namespace SQLW
       bool hasColumns() const { return ! _columns.empty(); }
 
 
-      // Return's true if an error is present after the last usage
-      bool error() const { return _error != nullptr; }
+      // Iterator interfaces for the params and columns
+      // Start and end of parameters
+      ParameterIterator parametersBegin() { return _parameters.begin(); }
+      ParameterIterator parametersEnd() { return _parameters.end(); }
 
-      // Return the current error
-      std::string getError() const { return std::string( _error ? _error : "" ); }
+      // Start and end of columns
+      ColumnIterator columnsBegin() { return _columns.begin(); }
+      ColumnIterator columnsEnd() { return _columns.end(); }
 
-
-
-      // Implement the "BasicLockable" interface
-      // Typedef a lock to interface with the mutex
-      typedef std::unique_lock< Query > QueryLock;
 
       // Create and return a lock for this query
-      QueryLock acquire() { return QueryLock( *this ); }
+      LockType acquire() { return LockType( *this ); }
 
       // Lock the internal mutex
-      void lock() { _theMutex.lock(); _error = nullptr; }
+      void lock();
 
       // Unlock the internal mutex
-      void unlock() { _theMutex.unlock(); }
+      void unlock();
   };
 
 }

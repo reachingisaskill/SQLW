@@ -157,82 +157,82 @@ namespace SQLW
   }
 
 
-  bool Parameter::setValue( const rapidjson::Document& data )
-  {
-    if ( ! data.HasMember( _name.c_str() ) )
-      return false;
+//  bool Parameter::setValue( const rapidjson::Document& data )
+//  {
+//    if ( ! data.HasMember( _name.c_str() ) )
+//      return false;
+//
+//    switch( _type )
+//    {
+//      case Parameter::Text :
+//        if ( ! data[_name.c_str()].IsString() )
+//          return false;
+//        else
+//          _text = data[_name.c_str()].GetString();
+//        break;
+//    
+//      case Parameter::Int :
+//        if ( ! data[_name.c_str()].IsInt64() )
+//          return false;
+//        else
+//          _int = data[_name.c_str()].GetInt64();
+//        break;
+//    
+//      case Parameter::Bool :
+//        if ( ! data[_name.c_str()].IsBool() )
+//          return false;
+//        else
+//          _bool = data[_name.c_str()].GetBool();
+//        break;
+//    
+//      case Parameter::Blob :
+//        if ( ! data[_name.c_str()].IsString() )
+//          return false;
+//        else
+//          _blob = data[_name.c_str()].GetString();
+//        break;
+//    
+//      case Parameter::Double :
+//        if ( ! data[_name.c_str()].IsDouble() )
+//          return false;
+//        else
+//          _double = data[_name.c_str()].GetDouble();
+//        break;
+//    }
+//    return true;
+//  }
 
-    switch( _type )
-    {
-      case Parameter::Text :
-        if ( ! data[_name.c_str()].IsString() )
-          return false;
-        else
-          _text = data[_name.c_str()].GetString();
-        break;
-    
-      case Parameter::Int :
-        if ( ! data[_name.c_str()].IsInt64() )
-          return false;
-        else
-          _int = data[_name.c_str()].GetInt64();
-        break;
-    
-      case Parameter::Bool :
-        if ( ! data[_name.c_str()].IsBool() )
-          return false;
-        else
-          _bool = data[_name.c_str()].GetBool();
-        break;
-    
-      case Parameter::Blob :
-        if ( ! data[_name.c_str()].IsString() )
-          return false;
-        else
-          _blob = data[_name.c_str()].GetString();
-        break;
-    
-      case Parameter::Double :
-        if ( ! data[_name.c_str()].IsDouble() )
-          return false;
-        else
-          _double = data[_name.c_str()].GetDouble();
-        break;
-    }
-    return true;
-  }
 
-
-  void Parameter::getValue( rapidjson::Document& data )
-  {
-    switch( _type )
-    {
-      case Parameter::Text :
-        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
-                        rapidjson::Value( _text.c_str(), data.GetAllocator() ), data.GetAllocator() );
-        break;
-    
-      case Parameter::Int :
-        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
-                        _int, data.GetAllocator() );
-        break;
-    
-      case Parameter::Bool :
-        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
-                        _bool, data.GetAllocator() );
-        break;
-    
-      case Parameter::Blob :
-        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
-                        rapidjson::Value( _blob.c_str(), data.GetAllocator() ), data.GetAllocator() );
-        break;
-    
-      case Parameter::Double :
-        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
-                        _double, data.GetAllocator() );
-        break;
-    }
-  }
+//  void Parameter::getValue( rapidjson::Document& data )
+//  {
+//    switch( _type )
+//    {
+//      case Parameter::Text :
+//        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
+//                        rapidjson::Value( _text.c_str(), data.GetAllocator() ), data.GetAllocator() );
+//        break;
+//    
+//      case Parameter::Int :
+//        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
+//                        _int, data.GetAllocator() );
+//        break;
+//    
+//      case Parameter::Bool :
+//        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
+//                        _bool, data.GetAllocator() );
+//        break;
+//    
+//      case Parameter::Blob :
+//        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
+//                        rapidjson::Value( _blob.c_str(), data.GetAllocator() ), data.GetAllocator() );
+//        break;
+//    
+//      case Parameter::Double :
+//        data.AddMember( rapidjson::Value( _name.c_str(), data.GetAllocator() ).Move(),
+//                        _double, data.GetAllocator() );
+//        break;
+//    }
+//  }
 
 
   Parameter::operator std::string() const

@@ -3,7 +3,6 @@
 #define SQLW_PARAMETER_H_
 
 #include "sqlite3.h"
-#include "rapidjson/document.h"
 
 #include <string>
 
@@ -13,6 +12,9 @@ namespace SQLW
 
   class Parameter
   {
+    // Only query to access the internals
+    friend class Query;
+
     public:
       enum Type { Text, Int, Bool, Blob, Double };
 
@@ -32,6 +34,14 @@ namespace SQLW
 
       // Enumerated type identifier
       Type _type;
+
+
+      // sets the parameter to an sqlite statement
+      void assignStatement( sqlite3_stmt*, size_t );
+
+      // Fills the parameter value from a column from an sqlite statement
+      void readStatement( sqlite3_stmt*, size_t );
+
 
     public:
       // Create and initialise the type
@@ -53,22 +63,12 @@ namespace SQLW
       ~Parameter();
 
 
-      // sets the parameter to an sqlite statement
-      void assignStatement( sqlite3_stmt*, size_t );
-
-      // Fills the parameter value from a column from an sqlite statement
-      void readStatement( sqlite3_stmt*, size_t );
-
-
-      // Sets the value using the json value object returns false if the types don't match
-      bool setValue( const rapidjson::Document& );
-
-      // Gets the value and stores it in the json document 
-      void getValue( rapidjson::Document& );
-
+      // Return the name
+      const std::string& name() const { return _name; }
 
       // Returns the parameter type
       Type type() const { return _type; }
+
 
       // Cast data to the requested data types. Will assert type is correct!
       explicit operator std::string() const;
@@ -76,6 +76,7 @@ namespace SQLW
       explicit operator bool() const;
       explicit operator void*() const;
       explicit operator double() const;
+
 
       // Sets the paramter value. Will assert type is correct!
       void set( std::string );

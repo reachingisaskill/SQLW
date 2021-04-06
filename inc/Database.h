@@ -32,6 +32,10 @@ namespace SQLW
     // Allow the query class to access some private functions
     friend class Query;
 
+    // Json wrapper interface. Make it a friend for ease.
+    friend rapidjson::Document executeJson( Database&, const char*, const rapidjson::Document& );
+
+    // Container to store the queries
     typedef std::unordered_map< std::string, Query* > QueryMap;
 
     private:
@@ -65,13 +69,20 @@ namespace SQLW
 
 
 
-      // Run the query name parsing JSON data in and out
-      rapidjson::Document executeJson( const char*, const rapidjson::Document& );
+      // Return a reference to a stored query for access to the manual interface
+      // References are valid for the lifetime of the database object.
+      Query& requestQuery( const char* );
 
-      // Run the query name parsing JSON data out only. Will fail if parameters are required
-      rapidjson::Document executeJson( const char* );
+
+      // Return true if the query exists. For runtime assertion that the configuration was loaded correctly
+      bool queryExists( const char* ) const;
 
   };
+
+
+
+  // Run the query name parsing JSON data in and out
+  rapidjson::Document executeJson( Database&, const char*, const rapidjson::Document& );
 
 }
 
