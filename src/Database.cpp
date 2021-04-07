@@ -152,33 +152,33 @@ namespace SQLW
   }
 
 
-  void getParameter( Parameter& param, rapidjson::Document& data )
+  void getParameter( Parameter& param, rapidjson::Value& data, rapidjson::Document::AllocatorType& alloc )
   {
     switch( param.type() )
     {
       case Parameter::Text :
-        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
-                        rapidjson::Value( static_cast<std::string>( param ).c_str(), data.GetAllocator() ), data.GetAllocator() );
+        data.AddMember( rapidjson::Value( param.name().c_str(), alloc ).Move(),
+                        rapidjson::Value( static_cast<std::string>( param ).c_str(), alloc ), alloc );
         break;
     
       case Parameter::Int :
-        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
-                        static_cast< int64_t >( param ), data.GetAllocator() );
+        data.AddMember( rapidjson::Value( param.name().c_str(), alloc ).Move(),
+                        static_cast< int64_t >( param ), alloc );
         break;
     
       case Parameter::Bool :
-        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
-                        static_cast< bool >( param ), data.GetAllocator() );
+        data.AddMember( rapidjson::Value( param.name().c_str(), alloc ).Move(),
+                        static_cast< bool >( param ), alloc );
         break;
     
       case Parameter::Blob :
-        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
-                        rapidjson::Value( static_cast< std::string >( param ).c_str(), data.GetAllocator() ), data.GetAllocator() );
+        data.AddMember( rapidjson::Value( param.name().c_str(), alloc ).Move(),
+                        rapidjson::Value( static_cast< std::string >( param ).c_str(), alloc ), alloc );
         break;
     
       case Parameter::Double :
-        data.AddMember( rapidjson::Value( param.name().c_str(), data.GetAllocator() ).Move(),
-                        static_cast< double >( param ), data.GetAllocator() );
+        data.AddMember( rapidjson::Value( param.name().c_str(), alloc ).Move(),
+                        static_cast< double >( param ), alloc );
         break;
     }
   }
@@ -188,11 +188,13 @@ namespace SQLW
   {
     Database::QueryMap::iterator found = db._queries.find( name );
     rapidjson::Document response( rapidjson::kObjectType );
+    rapidjson::Document::AllocatorType& alloc = response.GetAllocator();
 
     if ( found == db._queries.end() )
     {
-      response.AddMember( "success", false, response.GetAllocator() );
-      response.AddMember( "error", rapidjson::Value( "Invalid request. Does not exist.", response.GetAllocator() ), response.GetAllocator() );
+      response.AddMember( "success", false, alloc );
+      response.AddMember( "error", rapidjson::Value( "Invalid request. Does not exist.", alloc ), alloc );
+      response.AddMember( "data", rapidjson::Value( rapidjson::kArrayType ), alloc );
       return response;
     }
 
@@ -206,11 +208,17 @@ namespace SQLW
     {
       if ( ! setParameter( *pit, data ) )
       {
+        std::string err_string( "Invalid request parameter: " );
+        err_string += pit->name();
+
         response.AddMember( "success", false, response.GetAllocator() );
-        response.AddMember( "error", rapidjson::Value( "Invalid request. Parameters not correct.", response.GetAllocator() ), response.GetAllocator() );
+        response.AddMember( "error", rapidjson::Value( err_string.c_str(), alloc ), alloc );
+        response.AddMember( "data", rapidjson::Value( rapidjson::kArrayType ), alloc );
         return response;
       }
     }
+
+    rapidjson::Value column_data( rapidjson::kArrayType );
 
     // Lock the database connection
     query.prepare();
@@ -218,10 +226,12 @@ namespace SQLW
     // Step through the query
     while ( query.step() )
     {
+      rapidjson::Value col( rapidjson::kObjectType );
       for ( Query::ColumnIterator cit = query.columnsBegin(); cit != query.columnsEnd(); ++cit )
       {
-        getParameter( *cit, response );
+        getParameter( *cit, col, alloc );
       }
+      column_data.PushBack( col, alloc );
     }
 
     // Release the database connection
@@ -229,12 +239,14 @@ namespace SQLW
 
     if ( query.error() )
     {
-      response.AddMember( "success", false, response.GetAllocator() );
-      response.AddMember( "error", rapidjson::Value( query.getError(), response.GetAllocator() ), response.GetAllocator() );
+      response.AddMember( "success", false, alloc );
+      response.AddMember( "error", rapidjson::Value( query.getError(), alloc ), alloc );
+      response.AddMember( "data", rapidjson::Value( rapidjson::kArrayType ), alloc );
     }
     else
     {
-      response.AddMember( "success", true, response.GetAllocator() );
+      response.AddMember( "success", true, alloc );
+      response.AddMember( "data", column_data, alloc );
     }
 
     return response;
