@@ -2,6 +2,7 @@
 #include "Query.h"
 #include "Database.h"
 
+#include <iostream>
 #include <thread>
 
 
@@ -12,6 +13,7 @@ namespace SQLW
     _connection( con ),
     _connectionLock( _connection.mutex, std::defer_lock ),
     _theStatement( nullptr ),
+    _name( config["name"].asString() ),
     _description( config["description"].asString() ),
     _statementText( config["statement"].asString() ),
     _error( nullptr )
@@ -20,8 +22,7 @@ namespace SQLW
 
     if ( result != SQLITE_OK || _theStatement == nullptr )
     {
-      std::stringstream ss;
-      ss << "Fail to prepare query: " << _description << " Error " << result << " : " << sqlite3_errmsg( _connection.database );
+      std::cerr << "SQLW Error - Failed to prepare query: " << _name << ". Error " << result << " : " << sqlite3_errmsg( _connection.database ) << std::endl;
       throw std::runtime_error( "Failed to prepare query." );
     } 
 
@@ -30,7 +31,7 @@ namespace SQLW
     {
       const CON::Object& param = parameters[i];
 
-      if ( param["type"].asString() == "text" )
+      if ( param["type"].asString() == "text" || param["type"].asString() == "string" )
       {
         _parameters.push_back( Parameter( param["name"].asString(), Parameter::Text ) );
       }
@@ -52,6 +53,7 @@ namespace SQLW
       }
       else
       {
+        std::cerr << "SQLW Error - Unknown parameter type : " << param["type"].asString() << std::endl;
         throw std::runtime_error( "Unknown parameter type." );
       }
     }
@@ -61,7 +63,7 @@ namespace SQLW
     {
       const CON::Object& column = columns[i];
 
-      if ( column["type"].asString() == "text" )
+      if ( column["type"].asString() == "text" || column["type"].asString() == "string" )
       {
         _columns.push_back( Parameter( column["name"].asString(), Parameter::Text ) );
       }
@@ -83,6 +85,7 @@ namespace SQLW
       }
       else
       {
+        std::cerr << "SQLW Error - Unknown column type : " << column["type"].asString() << std::endl;
         throw std::runtime_error( "Unknown column type." );
       }
     }
@@ -251,7 +254,7 @@ namespace SQLW
   }
 
 
-  void Query::release()
+  void Query::reset()
   {
     // Clean up the mess and importantly release access to the connection!
     _connectionLock.unlock();
@@ -270,7 +273,7 @@ namespace SQLW
   {
     // Clean up in case something catastrophic happened
     if ( _connectionLock.owns_lock() )
-      this->release();
+      this->reset();
 
     _theMutex.unlock();
   }

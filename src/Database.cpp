@@ -4,6 +4,7 @@
 #include "Database.h"
 #include "Query.h"
 
+#include <iostream>
 #include <sys/stat.h>
 
 
@@ -82,6 +83,7 @@ namespace SQLW
 
     if ( found == _queries.end() )
     {
+      std::cerr << "SQLW Error - Requested query not found: " << name << std::endl;
       throw std::runtime_error( "Requested query does not exist" );
     }
 
@@ -223,7 +225,7 @@ namespace SQLW
     }
 
     // Release the database connection
-    query.release();
+    query.reset();
 
     if ( query.error() )
     {

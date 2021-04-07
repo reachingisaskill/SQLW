@@ -45,6 +45,9 @@ namespace SQLW
       // The statement pointer
       sqlite3_stmt* _theStatement;
 
+      // The name of the query
+      const std::string _name;
+
       // Very brief description for debugging
       const std::string _description;
 
@@ -84,7 +87,7 @@ namespace SQLW
       bool step();
 
       // Clean up the query and release the database connection. Must be called even if an error occurs!
-      void release();
+      void reset();
 
 
       // Interface for checking errors during processing
@@ -98,6 +101,10 @@ namespace SQLW
       // Flags to return if the query has/expects columns/parameters
       bool hasParameters() const { return ! _parameters.empty(); }
       bool hasColumns() const { return ! _columns.empty(); }
+
+      // Flags to return if the query has/expects columns/parameters
+      size_t countParameters() const { return _parameters.size(); }
+      size_t countColumns() const { return _columns.size(); }
 
 
       // Interfaces for the params and columns

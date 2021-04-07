@@ -72,6 +72,7 @@ namespace SQLW
 
       // Cast data to the requested data types. Will assert type is correct!
       explicit operator std::string() const;
+      explicit operator const char*() const;
       explicit operator int64_t() const;
       explicit operator bool() const;
       explicit operator void*() const;

@@ -135,7 +135,10 @@ namespace SQLW
     switch( _type )
     {
       case Parameter::Text :
-        _text = (const char*)sqlite3_column_text( stmt, index );
+        {
+          const char* temp = (const char*)sqlite3_column_text( stmt, index );
+          _text = ( temp ? temp : "" );
+        }
         break;
 
       case Parameter::Int :
@@ -147,7 +150,10 @@ namespace SQLW
         break;
 
       case Parameter::Blob :
-        _blob = (const char*)sqlite3_column_blob( stmt, index );
+        {
+          const char* temp = (const char*)sqlite3_column_text( stmt, index );
+          _blob = ( temp ? temp : "" );
+        }
         break;
 
       case Parameter::Double :
@@ -242,6 +248,16 @@ namespace SQLW
       return _text;
     else
       return _blob;
+  }
+
+
+  Parameter::operator const char*() const
+  {
+    assert( _type == Parameter::Text || _type == Blob );
+    if ( _type == Parameter::Text )
+      return _text.c_str();
+    else
+      return _blob.c_str();
   }
 
 
